@@ -1,5 +1,6 @@
 from typing import Union
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import string
 import random
 import json
@@ -28,6 +29,16 @@ def player_create(username: str) -> bool:
         json.dump(data, file)
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=[""]
+)
+
 
 @app.get("/root")
 def read_root():
