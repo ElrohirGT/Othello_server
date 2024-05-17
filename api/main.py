@@ -78,7 +78,7 @@ def new_session(session_name : str):
 
 @app.get("/session/active")
 def list_sessions():
-    existing_sessions = os.listdir('/sessions')
+    existing_sessions = os.listdir('../sessions')
     active_sessions = []
     for _existing_session in existing_sessions:
 
