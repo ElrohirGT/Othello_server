@@ -194,3 +194,71 @@ def pair_players(session_name : str):
             return {"message": "Pairs done"}
     else:
         return {"message": "Session ID '" + session_name + "' does not exist."}
+
+
+@app.post("/player/turn")
+def may_move(session_name : str, player_id: str):
+    directory_path = '../sessions/' + session_name
+    if os.path.exists(directory_path):
+        file_path = directory_path + '/session_variables.json'
+
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        for matches in data['current_matches']:
+            if (matches['whites'] == player_id) | (matches['blacks'] == player_id):
+                match_data = directory_path + '/games/' + matches['match_id'] + '.pkl'
+                with open(match_data, 'rb') as f:
+                    othello_game = pickle.load(f)
+
+                if othello_game.check_game_over():
+                    if othello_game.score[1] > othello_game.score[-1]:
+                        return {"message": "Game Over", "winner": "whites"}
+                    if othello_game.score[-1] > othello_game.score[1]:
+                        return {"message": "Game Over", "winner": "blacks"}
+                    return {"message": "Game Over", "winner": "tie"}
+
+                turn = ((othello_game.current_player == 1) & (matches['whites'] == player_id)) | ((othello_game.current_player == -1) & (matches['blacks'] == player_id))
+
+                if turn:
+                    return {"message": "Keep Playing",'turn': turn, 'board' : othello_game.board}
+                else:
+                    return {"message": "Keep Playing",'turn': turn}
+
+    else:
+        return {"message": "Session ID '" + session_name + "' does not exist."}
+
+
+
+@app.post("/player/move")
+def move(session_name : str, player_id: str, row: int, column: int):
+    directory_path = '../sessions/' + session_name
+    if os.path.exists(directory_path):
+        file_path = directory_path + '/session_variables.json'
+
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        for matches in data['current_matches']:
+            if (matches['whites'] == player_id) | (matches['blacks'] == player_id):
+                match_data = directory_path + '/games/' + matches['match_id'] + '.pkl'
+                with open(match_data, 'rb') as f:
+                    othello_game = pickle.load(f)
+
+                turn = ((othello_game.current_player == 1) & (matches['whites'] == player_id)) | ((othello_game.current_player == -1) & (matches['blacks'] == player_id))
+
+                if turn:
+                    if othello_game.is_valid_move(othello_game.current_player, row, column):
+                        othello_game.update_board(othello_game.current_player, row, column)
+                        with open(match_data, 'wb') as f:
+                            # Serialize and save the object to the file
+                            pickle.dump(othello_game, f)
+
+                        return {"message": "Move saved!"}
+                    else:
+                        return {"message": "Invalid Move"}
+                else:
+                    return {"message": "Not your turn!"}
+
+    else:
+        return {"message": "Session ID '" + session_name + "' does not exist."}

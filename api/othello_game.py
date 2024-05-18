@@ -20,14 +20,19 @@ class OthelloGame():
             print('-' * 15)
 
     def is_valid_move(self, player, row, col):
-        return True
+        return (self.board[row][col] == 0)
+
 
     def update_board(self, player, row, col):
         self.board[row][col] = self.current_player
         self.score[self.current_player] += 1
         self.empty_squares -= 1
 
-        self.current_player = -1 if self.empty_squares == 1 else 1
+        if self.current_player == -1:
+            self.current_player = 1
+        else:
+            self.current_player = -1
+
         return True
 
     def check_game_over(self) -> bool:
