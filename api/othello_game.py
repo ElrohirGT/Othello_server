@@ -1,3 +1,6 @@
+from typing import Tuple
+
+
 class OthelloGame():
 
     def __init__(self, game_id : str, white_player : str, black_player : str):
@@ -23,47 +26,100 @@ class OthelloGame():
             print('|'.join(map(str, row)))
             print('-' * 15)
     def is_valid_move(self, player, row, col):
-        return (self.board[row][col] == 0)
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),(-1, -1), (-1, 1), (1, -1), (1, 1)]
 
+        if self.board[row][col] != 0:
+            return False
+
+        opponent = -player
+
+        for direction in directions:
+            dr, dc = direction
+            r, c = row + dr, col + dc
+            found_opponent = False
+
+            while 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == opponent:
+                r += dr
+                c += dc
+                found_opponent = True
+
+            if found_opponent and 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == player:
+                return True
+
+        return False
 
     def update_board(self, player, row, col) -> bool:
-        self.board[row][col] = self.current_player
-        self.score[self.current_player] += 1
-        self.empty_squares -= 1
 
-        if self.current_player == -1:
-            self.current_player = 1
+        if self.is_valid_move(player, row, col):
+            directions = [(-1, 0), (1, 0), (0, -1), (0, 1),(-1, -1), (-1, 1), (1, -1), (1, 1)]
+            self.board[row][col] = self.current_player
+            opponent = -self.current_player
+
+            for direction in directions:
+                pieces_to_flip = []
+                dr, dc = direction
+                r, c = row + dr, col + dc
+
+                while 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == opponent:
+                    pieces_to_flip.append((r, c))
+                    r += dr
+                    c += dc
+
+                if 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == player:
+                    for (fr, fc) in pieces_to_flip:
+                        self.board[fr][fc] = player
+
+
+            self.score[self.current_player] = 0
+            self.score[opponent] = 0
+
+            for i in range(8):
+                for j in range(8):
+                    if self.board[i][j] == self.current_player:
+                        self.score[self.current_player] += 1
+                    if self.board[i][j] == opponent:
+                        self.score[opponent] += 1
+
+            _game_over, _game_over_msg = self.check_game_over()
+
+            if _game_over == True:
+                self.game_over = True
+
+            return True
+
         else:
-            self.current_player = -1
+            return False
 
-        self.check_game_over()
-        return True
 
-    def check_game_over(self) -> bool:
+    def valid_moves(self, player):
+        valid_moves = []
+        for row in range(8):
+            for col in range(8):
+                if self.is_valid_move(player, row, col):
+                    valid_moves.append((row, col))
 
-        if self.empty_squares == 0:
-            self.game_over = True
+        return valid_moves
+
+    def check_game_over(self) -> tuple[bool, str]:
+
+        # Check for valid moves for both players
+        moves_opponent = self.valid_moves(-self.current_player)
+        moves_current_player = self.valid_moves(self.current_player)
+
+        if not moves_opponent and not moves_current_player:
             if self.score[1] > self.score[-1]:
                 self.winner = self.white_player
             if self.score[-1] > self.score[1]:
                 self.winner = self.black_player
             if self.score[-1] == self.score[1]:
                 self.winner = 'Tie'
-            return True
-
-        for row in self.board:
-            if 0 in row:
-                return False
-
-
-        self.game_over = True
-        if self.score[1] > self.score[-1]:
-            self.winner = self.white_player
-        if self.score[-1] > self.score[1]:
-            self.winner = self.black_player
-        if self.score[-1] == self.score[1]:
-            self.winner = 'Tie'
-        return True
+            return True, 'Game Over'
+        else:
+            if not moves_opponent:
+                return False, 'Moves left'
+            else:
+                self.current_player = -self.current_player
+                return False, 'Moves left'
 
 
 if __name__ == '__main__':
@@ -72,3 +128,6 @@ if __name__ == '__main__':
     game.update_board(game.current_player, 5,5)
     print('Move 1')
     game.display_board()
+
+
+

@@ -118,6 +118,34 @@ def open_game(session_name : str):
         if ('current_matches' in data) & (data['round'] == 'ready'):
             if all(d.get('status') == 'done' for d in data['current_matches']):
                 data['round'] = 'hold'
+
+
+                for match in data['current_matches']:
+                    game_path = _session_path + '/games/' + match['match_id'] + '.pkl'
+                    with open(game_path, 'rb') as f:
+                        othello_game = pickle.load(f)
+
+                    _winner = othello_game.winner
+                    _whites = match['whites']
+                    _blacks = match['blacks']
+
+                    for index, _player in enumerate(data['league']):
+
+                        if (_player['name'] == _whites)|(_player['name'] == _blacks):
+
+                            if _winner == 'Tie':
+                                _player['draws'] += 1
+                            else:
+                                if _player['name'] == _winner:
+                                    _player['wins'] += 1
+                                else:
+                                    _player['losses'] += 1
+
+                            _player['points'] = (_player['wins']  * 3) + (_player['draws'])
+
+                        data['league'][index] = _player
+
+
                 with open(file_path, 'w') as file:
                      json.dump(data, file)
 
@@ -153,7 +181,7 @@ def pair_players(session_name : str):
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-        if data['registration'] == 'open':
+        if data['registration'] == 'not applicable any more':
             return {
                 'status': 502
                 , 'message': 'Session must be closed to pair players'
@@ -212,6 +240,14 @@ def new_player(session_name : str, player_name : str):
         if player_name not in data['players']:
             data['players'].append(player_name)
 
+            data['league'].append({
+                'name': player_name
+                , 'wins': 0
+                , 'draws': 0
+                , 'losses': 0
+                , 'points' : 0
+            })
+
             with open(file_path, 'w') as file:
                 json.dump(data, file)
             return {
@@ -250,27 +286,27 @@ def match_info(session_name : str, player_name: str):
                     , 'match_status' : 'bench'
                 }
             else:
+                if 'current_matches' in data:
+                    for match in data['current_matches']:
+                        if player_name == match['whites']:
 
-                for match in data['current_matches']:
-                    if player_name == match['whites']:
-
-                        return {
-                            'status': 200
-                            , 'message': 'Match info retrieved successfully'
-                            , 'player_name': player_name
-                            , 'match': match['match_id']
-                            , 'symbol': 1
-                            , 'match_status' : match['status']
-                        }
-                    if player_name == match['blacks']:
-                        return {
-                            'status': 200
-                            , 'message': 'Match info retrieved successfully'
-                            , 'player_name': player_name
-                            , 'match': match['match_id']
-                            , 'symbol': -1
-                            , 'match_status' : match['status']
-                        }
+                            return {
+                                'status': 200
+                                , 'message': 'Match info retrieved successfully'
+                                , 'player_name': player_name
+                                , 'match': match['match_id']
+                                , 'symbol': 1
+                                , 'match_status' : match['status']
+                            }
+                        if player_name == match['blacks']:
+                            return {
+                                'status': 200
+                                , 'message': 'Match info retrieved successfully'
+                                , 'player_name': player_name
+                                , 'match': match['match_id']
+                                , 'symbol': -1
+                                , 'match_status' : match['status']
+                            }
 
                 return {
                     'status': 502
@@ -308,43 +344,44 @@ def turn_to_move(session_name : str, player_name : str, match_id : str):
                     , 'turn'  : False
                 }
 
-            for match in data['current_matches']:
+            if 'current_matches' in data:
+                for match in data['current_matches']:
 
-                if ((player_name == match['whites']) | (player_name == match['blacks'])) & (match['match_id'] == match_id):
-                    game_path = _session_path + '/games/' + match_id + '.pkl'
-                    with open(game_path, 'rb') as f:
-                        othello_game = pickle.load(f)
+                    if ((player_name == match['whites']) | (player_name == match['blacks'])) & (match['match_id'] == match_id):
+                        game_path = _session_path + '/games/' + match_id + '.pkl'
+                        with open(game_path, 'rb') as f:
+                            othello_game = pickle.load(f)
 
-                    if (othello_game.current_player == 1) and (player_name == match['whites']):
-                        return {
-                            'status': 200
-                            , 'message': 'White Move'
-                            , 'turn' : True
-                            , 'game_over' : othello_game.game_over
-                            , 'winner' : othello_game.winner
-                            , 'board' : othello_game.board
-                            , 'score' : 'Whites : ' + str(othello_game.score[1]) + ' - Blacks : ' + str(othello_game.score[-1])
-                        }
-                    else :
-                        if (othello_game.current_player == -1) and (player_name == match['blacks']):
+                        if (othello_game.current_player == 1) and (player_name == match['whites']):
                             return {
                                 'status': 200
-                                , 'message': 'Black Move'
+                                , 'message': 'White Move'
                                 , 'turn' : True
-                                , 'game_over': othello_game.game_over
-                                , 'winner': othello_game.winner
-                                , 'board': othello_game.board
+                                , 'game_over' : othello_game.game_over
+                                , 'winner' : othello_game.winner
+                                , 'board' : othello_game.board
                                 , 'score' : 'Whites : ' + str(othello_game.score[1]) + ' - Blacks : ' + str(othello_game.score[-1])
                             }
                         else :
-                            return {
-                                'status': 200
-                                , 'message': 'White Move' if othello_game.current_player == 1 else 'Black Move'
-                                , 'turn': False
-                                , 'game_over': othello_game.game_over
-                                , 'winner': othello_game.winner
-                                , 'score' : 'Whites : ' + str(othello_game.score[1]) + ' - Blacks : ' + str(othello_game.score[-1])
-                            }
+                            if (othello_game.current_player == -1) and (player_name == match['blacks']):
+                                return {
+                                    'status': 200
+                                    , 'message': 'Black Move'
+                                    , 'turn' : True
+                                    , 'game_over': othello_game.game_over
+                                    , 'winner': othello_game.winner
+                                    , 'board': othello_game.board
+                                    , 'score' : 'Whites : ' + str(othello_game.score[1]) + ' - Blacks : ' + str(othello_game.score[-1])
+                                }
+                            else :
+                                return {
+                                    'status': 200
+                                    , 'message': 'White Move' if othello_game.current_player == 1 else 'Black Move'
+                                    , 'turn': False
+                                    , 'game_over': othello_game.game_over
+                                    , 'winner': othello_game.winner
+                                    , 'score' : 'Whites : ' + str(othello_game.score[1]) + ' - Blacks : ' + str(othello_game.score[-1])
+                                }
             return {
                 'status': 503
                 , 'message': 'Invalid User name - Match ID combination'
@@ -426,8 +463,57 @@ def move_coin(session_name : str, player_name : str, match_id : str, row : int, 
             , 'message': 'Session ID does not exist.'
         }
 
+@app.post("/game/classification")
+def league_info(session_name: str):
+    _session_path = '../sessions/' + session_name
+    if os.path.exists(_session_path):
+        file_path = _session_path + '/session_variables.json'
+        with open(file_path, 'r') as file:
+            data = json.load(file)
 
-    # return {
+        return {
+            'status': 200
+            , 'message': 'Classification retrieved successfully.'
+            , 'data' : data['league']
+        }
+    else:
+        return {
+            'status': 501
+            , 'message': 'Session ID does not exist.'
+            , 'data': []
+        }
+
+@app.post("/game/current_matches")
+def matches_info(session_name: str):
+    _session_path = '../sessions/' + session_name
+    if os.path.exists(_session_path):
+        file_path = _session_path + '/session_variables.json'
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        _current_matches = []
+        for match in data['current_matches']:
+            game_path = _session_path + '/games/' + match['match_id'] + '.pkl'
+            with open(game_path, 'rb') as f:
+                othello_game = pickle.load(f)
+
+            match['white_score'] = othello_game.score[1]
+            match['black_score'] = othello_game.score[-1]
+
+            _current_matches.append(match)
+        return {
+            'status': 200
+            , 'message': 'Classification retrieved successfully.'
+            , 'data' : _current_matches
+        }
+    else:
+        return {
+            'status': 501
+            , 'message': 'Session ID does not exist.'
+            , 'data': []
+        }
+
+# return {
     #     'message' : 'Coin moved successfully.'
     # }
 
