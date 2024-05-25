@@ -1,6 +1,9 @@
 # Othello_server
 Othello Game Coordinator for a 1v1 tournament
 
+### Disclaimer
+El contenido de este repositorio se encuentra en constante desarrollo, por lo que se recomienda hacer pulls requests constantes para mantenerlo al día.
+
 ## Instalación
 
 Luego de clonar el repositorio, 
@@ -114,3 +117,4 @@ Donde,
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
