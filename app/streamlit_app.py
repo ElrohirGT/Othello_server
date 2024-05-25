@@ -9,7 +9,6 @@ import requests
 
 host = 'http://localhost:8000'
 
-
 st.session_state.game_id = st.session_state.get('game_id', '')
 st.session_state.game_status = st.session_state.get('game_id', 'new')
 st.session_state.session_status = st.session_state.get('session_status', 'open')
