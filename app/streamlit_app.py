@@ -8,6 +8,7 @@ import time
 import requests
 
 host = 'http://localhost:8000'
+# host = 'http://ec2-18-224-173-144.us-east-2.compute.amazonaws.com:8000'
 
 st.session_state.game_id = st.session_state.get('game_id', '')
 st.session_state.game_status = st.session_state.get('game_id', 'new')

@@ -1,5 +1,5 @@
 from typing import Tuple
-
+from datetime import datetime, timedelta
 
 class OthelloGame():
 
@@ -17,6 +17,7 @@ class OthelloGame():
         self.score = {1: 2, -1 : 2}
         self.empty_squares = 60
         self.winner = None
+        self.last_turn = None
         self.game_over = False
         self.strikes = {1 : 0, -1 : 0}
         self.last_move = {1 : 0 , -1 : 0}
@@ -25,30 +26,23 @@ class OthelloGame():
         for row in self.board:
             print('|'.join(map(str, row)))
             print('-' * 15)
-    def is_valid_move(self, player, row, col):
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),(-1, -1), (-1, 1), (1, -1), (1, 1)]
 
-        if self.board[row][col] != 0:
-            return False
+    def update_board(self, player, row, col) -> (bool, str):
 
-        opponent = -player
+        if self.last_turn is None:
+            self.last_turn = datetime.now()
 
-        for direction in directions:
-            dr, dc = direction
-            r, c = row + dr, col + dc
-            found_opponent = False
+        else:
+            move_time = datetime.now()
+            time_diff = move_time - self.last_turn
 
-            while 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == opponent:
-                r += dr
-                c += dc
-                found_opponent = True
+            valid_timeframe = time_diff < timedelta(seconds = 3)
 
-            if found_opponent and 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == player:
-                return True
+            if not valid_timeframe:
+                self.winner = -self.current_player
+                self.game_over = True
+                return False, 'OVERTIME'
 
-        return False
-
-    def update_board(self, player, row, col) -> bool:
 
         if self.is_valid_move(player, row, col):
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1),(-1, -1), (-1, 1), (1, -1), (1, 1)]
@@ -82,14 +76,36 @@ class OthelloGame():
 
             _game_over, _game_over_msg = self.check_game_over()
 
-            if _game_over == True:
-                self.game_over = True
+            self.last_turn = datetime.now()
+            self.game_over = _game_over
 
-            return True
+            return True, 'VALID'
 
         else:
+            return False, 'INVALID'
+
+    def is_valid_move(self, player, row, col):
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),(-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+        if self.board[row][col] != 0:
             return False
 
+        opponent = -player
+
+        for direction in directions:
+            dr, dc = direction
+            r, c = row + dr, col + dc
+            found_opponent = False
+
+            while 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == opponent:
+                r += dr
+                c += dc
+                found_opponent = True
+
+            if found_opponent and 0 <= r < 8 and 0 <= c < 8 and self.board[r][c] == player:
+                return True
+
+        return False
 
     def valid_moves(self, player):
         valid_moves = []
@@ -101,6 +117,14 @@ class OthelloGame():
         return valid_moves
 
     def check_game_over(self) -> tuple[bool, str]:
+
+        if self.strikes[1] >= 3:
+            self.winner = self.black_player
+            return True, 'Game Over'
+
+        if self.strikes[-1] >= 3:
+            self.winner = self.white_player
+            return True, 'Game Over'
 
         # Check for valid moves for both players
         moves_opponent = self.valid_moves(-self.current_player)
@@ -121,6 +145,8 @@ class OthelloGame():
                 self.current_player = -self.current_player
                 return False, 'Moves left'
 
+    def strike(self):
+        self.strikes[self.current_player] += 1
 
 if __name__ == '__main__':
     game = OthelloGame('test_game')
