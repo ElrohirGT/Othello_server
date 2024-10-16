@@ -36,7 +36,7 @@ class OthelloGame():
             move_time = datetime.now()
             time_diff = move_time - self.last_turn
 
-            valid_timeframe = time_diff < timedelta(seconds = 3)
+            valid_timeframe = time_diff < timedelta(seconds = 180)
 
             if not valid_timeframe:
                 self.winner = -self.current_player
