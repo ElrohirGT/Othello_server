@@ -548,7 +548,7 @@ def eject_player(session_name : str, player_name : str):
         print(data)
         if player_name in data['players']:
             data['players'].remove(player_name)
-
+            data['league'] = [player for player in data['league'] if player['name'] != player_name]
             with open(file_path, 'w') as file:
                 json.dump(data, file)
 
