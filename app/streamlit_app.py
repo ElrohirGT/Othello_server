@@ -7,8 +7,8 @@ import numpy as np
 import time
 import requests
 
-host = 'http://localhost:8000'
-# host = 'http://ec2-18-224-173-144.us-east-2.compute.amazonaws.com:8000'
+#host = 'http://localhost:8000'
+host = 'http://ec2-34-204-14-38.compute-1.amazonaws.com'
 
 st.session_state.game_id = st.session_state.get('game_id', '')
 st.session_state.game_status = st.session_state.get('game_id', 'new')
@@ -45,7 +45,7 @@ def refresh_classif(game_id):
         st.session_state.classification = []
 
 def remove_player(game_id, player_id):
-    response = requests.post(host + '/session/eject?session_name=' + game_id + '&player_id=' + player_id).json()
+    response = requests.post(host + '/session/eject?session_name=' + game_id + '&player_name=' + player_id).json()
     refresh_classif(game_id)
 #
 # def refresh_matches():
@@ -161,19 +161,32 @@ def display_boards(boards):
         st.table(board)
 
 
+
 st.header("Othello Game Boards")
 
 
+
+
 # Refresh and display the boards every few seconds if a session is active
-if st.session_state.get("session_name"):
-    st.subheader(f"Current Boards for Session: {st.session_state['session_name']}")
-    board_placeholder = st.empty()  # Placeholder to update board state
+# Button to start/stop visualization
+if st.button("Toggle Visualization"):
+    st.session_state['visualize'] = not st.session_state.get('visualize', False)
 
-    while True:
-        boards = get_boards(st.session_state["session_name"])
+# Display boards if visualization is enabled
+if st.session_state.get("visualize", False):
+    st.subheader(f"Current Boards for Session: {st.session_state.game_id}")
+    board_placeholder = st.empty()
 
-        # Clear previous display and render current boards
+    # Run visualization loop
+    while st.session_state['visualize']:
+        boards = get_boards(st.session_state.game_id)
+
         with board_placeholder.container():
             display_boards(boards)
 
-        time.sleep(2)  # Refresh every 2 seconds
+        # Refresh every 2 seconds
+        time.sleep(2)
+
+        # Check if button was clicked again to stop visualization
+        if not st.session_state['visualize']:
+            break
