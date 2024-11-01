@@ -148,6 +148,9 @@ class OthelloGame():
     def strike(self):
         self.strikes[self.current_player] += 1
 
+    def get_board(self):
+        return self.board
+
 if __name__ == '__main__':
     game = OthelloGame('test_game')
     game.display_board()

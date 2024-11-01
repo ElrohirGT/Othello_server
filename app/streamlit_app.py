@@ -43,6 +43,10 @@ def refresh_classif(game_id):
         st.session_state.classification = response['data']
     else:
         st.session_state.classification = []
+
+def remove_player(game_id, player_id):
+    response = requests.post(host + '/session/eject?session_name=' + game_id + '&player_id=' + player_id).json()
+    refresh_classif(game_id)
 #
 # def refresh_matches():
 #     pass
@@ -64,6 +68,10 @@ def refresh_classif(game_id):
 _game_id = st.text_input('Enter game id')
 
 start_button =  st.button('Start game', on_click=start_game(_game_id))
+
+_remove_player = st.text_input('Remove player')
+
+remove_button = st.button('Remove player', on_click=remove_player(_game_id, _remove_player))
 
 st.title(f'{st.session_state.game_id}')
 
@@ -132,3 +140,40 @@ st.dataframe(
     , use_container_width=True
     , hide_index=True
 )
+
+def get_boards(session_name):
+    url = host + '/game/boards?session_name=' + session_name
+    response = requests.post(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return []
+    
+def display_boards(boards):
+    for board_info in boards:
+        st.subheader(f"Match ID: {board_info['match_id']}")
+        st.write(f"White Player: {board_info['white_player']} | Black Player: {board_info['black_player']}")
+        
+        # Convert board to DataFrame and replace values
+        board = pd.DataFrame(board_info["board"])
+        board = board.replace({0: ".", 1: "○", -1: "●"})
+        
+        st.table(board)
+
+
+st.header("Othello Game Boards")
+
+
+# Refresh and display the boards every few seconds if a session is active
+if st.session_state.get("session_name"):
+    st.subheader(f"Current Boards for Session: {st.session_state['session_name']}")
+    board_placeholder = st.empty()  # Placeholder to update board state
+
+    while True:
+        boards = get_boards(st.session_state["session_name"])
+
+        # Clear previous display and render current boards
+        with board_placeholder.container():
+            display_boards(boards)
+
+        time.sleep(2)  # Refresh every 2 seconds

@@ -598,6 +598,36 @@ def matches_info(session_name: str):
             , 'message': 'Session ID does not exist.'
             , 'data': []
         }
+    
+
+@app.post("/game/boards")
+def board_info(session_name : str):
+    _session_path = '../sessions/' + session_name
+    if os.path.exists(_session_path):
+        file_path = _session_path + '/session_variables.json'
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        _boards = []
+        for match in data['current_matches']:
+            game_path = _session_path + '/games/' + match['match_id'] + '.pkl'
+            with open(game_path, 'rb') as f:
+                othello_game = pickle.load(f)
+
+            _boards.append({
+                'match_id' : othello_game.match_id
+                , 'white_player' : othello_game.white_player
+                , 'black_player' : othello_game.black_player
+                , 'board' : othello_game.board
+            })
+
+        return {
+            'status': 200
+            , 'message': 'Boards retrieved successfully.'
+            , 'data': _boards
+        }
+
+        
 
 
 # return {
