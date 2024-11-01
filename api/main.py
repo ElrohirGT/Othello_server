@@ -617,7 +617,7 @@ def board_info(session_name : str):
                 othello_game = pickle.load(f)
 
             _boards.append({
-                'match_id' : othello_game.match_id
+                'match_id' : othello_game.gameid
                 , 'white_player' : othello_game.white_player
                 , 'black_player' : othello_game.black_player
                 , 'board' : othello_game.board
