@@ -621,6 +621,9 @@ def board_info(session_name : str):
                 , 'white_player' : othello_game.white_player
                 , 'black_player' : othello_game.black_player
                 , 'board' : othello_game.board
+                , 'white_score' : othello_game.score[1]
+                , 'black_score' : othello_game.score[-1]
+                , 'game_over' : othello_game.game_over
             })
 
         return {

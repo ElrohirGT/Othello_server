@@ -154,11 +154,11 @@ def get_boards(session_name):
 def display_boards(boards):
     for board_info in boards:
         st.subheader(f"Match ID: {board_info['match_id']}")
-        st.write(f"White Player: {board_info['white_player']} | Black Player: {board_info['black_player']}")
+        st.write(f"White Player: {board_info['white_player']} - Score: {board_info['white_score']} | Black Player: {board_info['black_player']} - Score: {board_info['black_score']}")
         
         # Convert board to DataFrame and replace values
         board = pd.DataFrame(board_info["board"])
-        board = board.replace({0: ".", 1: "○", -1: "●"})
+        board = board.replace({0: "", -1: "$\Large ○$", 1: "$\Large ● $"})
         
         st.table(board)
 
@@ -181,7 +181,8 @@ if st.session_state.get("visualize", False):
 
     # Run visualization loop
     while st.session_state['visualize']:
-        boards = get_boards(st.session_state.game_id)
+        boards = get_boards(st.session_state.game_id)['data']
+        
 
         with board_placeholder.container():
             display_boards(boards)
