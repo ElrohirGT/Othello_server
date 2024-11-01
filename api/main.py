@@ -632,6 +632,43 @@ def board_info(session_name : str):
             , 'data': _boards
         }
 
+@app.post("/game/clear_scores_and_matches")
+def clear_scores(session_name : str):
+    _session_path = '../sessions/' + session_name
+    if os.path.exists(_session_path):
+        file_path = _session_path + '/session_variables.json'
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        for index, player in enumerate(data['league']):
+            player['wins'] = 0
+            player['draws'] = 0
+            player['losses'] = 0
+            player['points'] = 0
+            data['league'][index] = player
+
+        with open(file_path, 'w') as file:
+            json.dump(data, file)
+
+        #remove all games
+        games_path = _session_path + '/games'
+        for game in os.listdir(games_path):
+            game_path = games_path + '/' + game
+            os.remove(game_path)
+
+        return {
+            'status': 200
+            , 'message': 'Scores cleared successfully.'
+        }
+    else:
+        return {
+            'status': 501
+            , 'message': 'Session ID does not exist.'
+        }
+    
+
+
+
         
 
 
