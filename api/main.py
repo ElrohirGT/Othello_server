@@ -545,10 +545,12 @@ def eject_player(session_name : str, player_name : str):
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-        print(data)
+        
         if player_name in data['players']:
             data['players'].remove(player_name)
+            
             data['league'] = [player for player in data['league'] if player['name'] != player_name]
+            print(data)
             with open(file_path, 'w') as file:
                 json.dump(data, file)
 
