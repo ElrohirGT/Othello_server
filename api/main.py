@@ -646,6 +646,8 @@ def clear_scores(session_name : str):
             player['losses'] = 0
             player['points'] = 0
             data['league'][index] = player
+        
+        data['current_matches'] = []
 
         with open(file_path, 'w') as file:
             json.dump(data, file)
@@ -659,6 +661,7 @@ def clear_scores(session_name : str):
         return {
             'status': 200
             , 'message': 'Scores cleared successfully.'
+            , 'data': data['league']
         }
     else:
         return {
