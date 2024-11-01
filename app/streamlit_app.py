@@ -145,7 +145,9 @@ def get_boards(session_name):
     url = host + '/game/boards?session_name=' + session_name
     response = requests.post(url)
     if response.status_code == 200:
+        print(response.json())
         return response.json()
+
     else:
         return []
     
