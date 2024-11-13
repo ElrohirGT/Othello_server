@@ -545,10 +545,12 @@ def eject_player(session_name : str, player_name : str):
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-        print(data)
+        
         if player_name in data['players']:
             data['players'].remove(player_name)
-
+            
+            data['league'] = [player for player in data['league'] if player['name'] != player_name]
+            print(data)
             with open(file_path, 'w') as file:
                 json.dump(data, file)
 
@@ -598,6 +600,79 @@ def matches_info(session_name: str):
             , 'message': 'Session ID does not exist.'
             , 'data': []
         }
+    
+
+@app.post("/game/boards")
+def board_info(session_name : str):
+    _session_path = '../sessions/' + session_name
+    if os.path.exists(_session_path):
+        file_path = _session_path + '/session_variables.json'
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        _boards = []
+        for match in data['current_matches']:
+            game_path = _session_path + '/games/' + match['match_id'] + '.pkl'
+            with open(game_path, 'rb') as f:
+                othello_game = pickle.load(f)
+
+            _boards.append({
+                'match_id' : othello_game.gameid
+                , 'white_player' : othello_game.white_player
+                , 'black_player' : othello_game.black_player
+                , 'board' : othello_game.board
+                , 'white_score' : othello_game.score[1]
+                , 'black_score' : othello_game.score[-1]
+                , 'game_over' : othello_game.game_over
+            })
+
+        return {
+            'status': 200
+            , 'message': 'Boards retrieved successfully.'
+            , 'data': _boards
+        }
+
+@app.post("/game/clear_scores_and_matches")
+def clear_scores(session_name : str):
+    _session_path = '../sessions/' + session_name
+    if os.path.exists(_session_path):
+        file_path = _session_path + '/session_variables.json'
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        for index, player in enumerate(data['league']):
+            player['wins'] = 0
+            player['draws'] = 0
+            player['losses'] = 0
+            player['points'] = 0
+            data['league'][index] = player
+        
+        data['current_matches'] = []
+
+        with open(file_path, 'w') as file:
+            json.dump(data, file)
+
+        #remove all games
+        games_path = _session_path + '/games'
+        for game in os.listdir(games_path):
+            game_path = games_path + '/' + game
+            os.remove(game_path)
+
+        return {
+            'status': 200
+            , 'message': 'Scores cleared successfully.'
+            , 'data': data['league']
+        }
+    else:
+        return {
+            'status': 501
+            , 'message': 'Session ID does not exist.'
+        }
+    
+
+
+
+        
 
 
 # return {
