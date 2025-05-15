@@ -17,22 +17,35 @@
 
     # Nixpkgs instantiated for supported system types.
     nixpkgsFor = forAllSystems (system: import nixpkgs {inherit system;});
+    pythonPkgs = p: [
+      p.fastapi
+      p.fastjsonschema
+      p.httptools
+      p.pandas
+      p.pydantic
+      p.requests
+      p.streamlit
+      p.uvicorn
+    ];
   in {
+    packages = forAllSystems (system: let
+      pkgs = nixpkgsFor.${system};
+      python = pkgs.python3.withPackages pythonPkgs;
+    in {
+      default = pkgs.writeShellApplication {
+        name = "othello server and frontend";
+        runtimeInputs = [python pkgs.process-compose];
+        text = ''
+          process-compose
+        '';
+      };
+    });
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      python = pkgs.python3.withPackages (p: [
-        p.fastapi
-        p.fastjsonschema
-        p.httptools
-        p.pandas
-        p.pydantic
-        p.requests
-        p.streamlit
-        p.uvicorn
-      ]);
+      python = pkgs.python3.withPackages pythonPkgs;
     in {
       default = pkgs.mkShell {
-        packages = [python pkgs.black];
+        packages = [python pkgs.black pkgs.process-compose];
       };
     });
   };

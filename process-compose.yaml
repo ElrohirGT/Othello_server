@@ -1,0 +1,9 @@
+version: "0.5"
+
+processes:
+  backend:
+    working_dir: api
+    command: uvicorn main:app --reload --host 0.0.0.0
+  frontend:
+    working_dir: app
+    command: streamlit run streamlit_app.py
